@@ -70,6 +70,14 @@ fpr_rf, tpr_rf, thr_rf = roc_curve(y_test, y_proba_rf)
 roc_auc_rf = auc(fpr_rf, tpr_rf)
 print(f"\n📈 ROC AUC (RF from fpr/tpr): {roc_auc_rf:.4f}")
 
+# AUPRC for Random Forest
+from sklearn.metrics import precision_recall_curve, auc
+
+precision, recall, _ = precision_recall_curve(y_test, y_proba_rf)
+auprc_rf = auc(recall, precision)
+print(f"\n📊 AUPRC (Random Forest): {auprc_rf:.4f}")
+
+
 # =====================================================================
 # 2) GRADIENT BOOSTING
 # =====================================================================
@@ -115,3 +123,10 @@ print(f"\n📈 ROC AUC (GB from fpr/tpr): {roc_auc_gb:.4f}")
 print("\n" + "=" * 60)
 print("✅ ENSEMBLE METHODS DONE")
 print("=" * 60)
+
+# AUPRC for Gradient Boosting (sonuna ekle)
+from sklearn.metrics import precision_recall_curve, auc
+
+precision, recall, _ = precision_recall_curve(y_test, y_proba_gb)
+auprc_gb = auc(recall, precision)
+print(f"\n📊 AUPRC (Gradient Boosting): {auprc_gb:.4f}")

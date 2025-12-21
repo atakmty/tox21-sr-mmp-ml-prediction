@@ -66,3 +66,10 @@ print(f"   Number of thresholds: {len(thresholds)}")
 print("\n" + "=" * 60)
 print("✅ KNN BASELINE DONE")
 print("=" * 60)
+
+# AUPRC for KNN
+from sklearn.metrics import precision_recall_curve, auc
+
+precision, recall, _ = precision_recall_curve(y_test, y_proba)
+auprc_knn = auc(recall, precision)
+print(f"\n📊 AUPRC (KNN): {auprc_knn:.4f}")

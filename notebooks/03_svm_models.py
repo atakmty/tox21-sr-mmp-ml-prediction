@@ -77,6 +77,13 @@ roc_auc_rbf = auc(fpr_rbf, tpr_rbf)
 print(f"\n📈 ROC AUC (RBF from fpr/tpr): {roc_auc_rbf:.4f}")
 print(f"   Thresholds: {len(thr_rbf)}")
 
+# AUPRC for RBF SVM
+from sklearn.metrics import precision_recall_curve, auc
+
+precision, recall, _ = precision_recall_curve(y_test, y_proba_rbf)
+auprc_rbf = auc(recall, precision)
+print(f"\n📊 AUPRC (RBF SVM): {auprc_rbf:.4f}")
+
 # ---------------------------------------------------------------------
 # 2) Linear SVM (daha hızlı, baseline)
 # ---------------------------------------------------------------------
@@ -114,3 +121,10 @@ print(f"   Thresholds: {len(thr_lin)}")
 print("\n" + "=" * 60)
 print("✅ SVM MODELS DONE")
 print("=" * 60)
+
+# AUPRC for Linear SVM (sonuna ekle)
+from sklearn.metrics import precision_recall_curve, auc
+
+precision, recall, _ = precision_recall_curve(y_test, y_proba_lin)
+auprc_lin = auc(recall, precision)
+print(f"\n📊 AUPRC (Linear SVM): {auprc_lin:.4f}")

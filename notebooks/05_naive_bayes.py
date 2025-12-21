@@ -67,3 +67,10 @@ print(f"   Thresholds: {len(thr_nb)}")
 print("\n" + "=" * 60)
 print("✅ NAIVE BAYES DONE")
 print("=" * 60)
+
+# AUPRC for Naive Bayes
+from sklearn.metrics import precision_recall_curve, auc
+
+precision, recall, _ = precision_recall_curve(y_test, y_proba_nb)
+auprc_nb = auc(recall, precision)
+print(f"\n📊 AUPRC (Naive Bayes): {auprc_nb:.4f}")

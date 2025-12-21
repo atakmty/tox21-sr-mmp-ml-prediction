@@ -87,3 +87,10 @@ for i, idx in enumerate(top_indices, 1):
 print("\n" + "=" * 60)
 print("✅ DECISION TREE MODELS DONE")
 print("=" * 60)
+
+# AUPRC for Decision Tree
+from sklearn.metrics import precision_recall_curve, auc
+
+precision, recall, _ = precision_recall_curve(y_test, y_proba_dt)
+auprc_dt = auc(recall, precision)
+print(f"\n📊 AUPRC (Decision Tree): {auprc_dt:.4f}")
