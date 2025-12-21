@@ -1,0 +1,9 @@
+{
+  "n_train_samples": 7320,
+  "n_test_samples": 238,
+  "n_features_original": 1024,
+  "n_features_pca": 100,
+  "pca_variance": 0.5721083541965011,
+  "train_toxic_rate": 0.15601092896174865,
+  "test_toxic_rate": 0.15966386554621848
+}
