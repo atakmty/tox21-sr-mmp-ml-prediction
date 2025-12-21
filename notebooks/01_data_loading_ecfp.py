@@ -1,5 +1,5 @@
 """
-Data Loading & ECFP Fingerprint Generation
+Data Loading & ECFP Fingerprint Generation (Separate Train/Test Files)
 Tox21 SR-MMP Toxicity Prediction
 """
 
@@ -7,89 +7,85 @@ import pandas as pd
 import numpy as np
 from rdkit import Chem
 from rdkit.Chem import AllChem
-from sklearn.model_selection import train_test_split
 from sklearn.decomposition import PCA
-import re
 import os
 
-print("="*60)
-print("📊 TOX21 SR-MMP: Data Loading & ECFP Feature Extraction")
-print("="*60)
+print("="*70)
+print("📊 TOX21 SR-MMP: Separate Train/Test Data Loading & ECFP Generation")
+print("="*70)
 
 # ============================================================================
-# STEP 1: LOAD DATA
+# STEP 1: LOAD TRAIN & TEST DATA (TSV Format)
 # ============================================================================
-print("\n🔍 STEP 1: Loading SR-MMP.smiles...")
+print("\n🔍 STEP 1: Loading sr-mmp-train.smiles & sr-mmp-test.smiles...")
 
-def parse_smiles_line(line):
-    """
-    Parse SMILES line: SMILES (start) + ID (middle) + Y (end)
-    """
-    parts = re.split(r'\s+', line.strip())
-    smiles = parts[0]  # First: SMILES
-    y = int(parts[-1]) # Last: Label (0/1)
-    return smiles, y
+def load_smiles_file(filepath):
+    """Load TSV SMILES file (SMILES, ID, Label)"""
+    df = pd.read_csv(
+        filepath,
+        sep='\t',
+        header=None,
+        names=['SMILES', 'CompoundID', 'Label']
+    )
+    return df
 
-# Read file
-smiles_list, y_list = [], []
-with open('SR-MMP.smiles', 'r') as f:
-    for line in f:
-        smiles, y = parse_smiles_line(line)
-        smiles_list.append(smiles)
-        y_list.append(y)
+# Load train & test
+df_train = load_smiles_file('data/sr-mmp-train.smiles')
+df_test = load_smiles_file('data/sr-mmp-test.smiles')
 
-df = pd.DataFrame({'Drug': smiles_list, 'Y': y_list})
-print(f"✅ Shape: {df.shape}")
-print(f"☠️ Toxic compounds: {(df['Y']==1).sum()} ({(df['Y']==1).mean():.1%})")
-print(f"\n📋 First 3 rows:")
-print(df.head(3))
+print(f"✅ Train set: {df_train.shape}")
+print(f"   ☠️ Toxic: {(df_train['Label']==1).sum()} ({(df_train['Label']==1).mean():.1%})")
+
+print(f"\n✅ Test set: {df_test.shape}")
+print(f"   ☠️ Toxic: {(df_test['Label']==1).sum()} ({(df_test['Label']==1).mean():.1%})")
+
+print(f"\n📋 Train set - First 2 rows:")
+print(df_train.head(2))
+print(f"\n📋 Test set - First 2 rows:")
+print(df_test.head(2))
 
 # ============================================================================
 # STEP 2: GENERATE MORGAN ECFP (Proposal Section 3.1)
 # ============================================================================
 print("\n🔬 STEP 2: Generating Morgan ECFP fingerprints...")
-print("   Parameters: radius=2, nBits=1024 (from outputs.txt)")
+print("   Parameters: radius=2 (ECFP4), nBits=1024")
 
-def morgan_ecfp(smiles, radius=2, nBits=1024):
+def morgan_ecfp(smiles, radius=2, nbits=1024):
     """
     Generate Morgan ECFP fingerprint for single SMILES
+    Returns zero vector if SMILES is invalid
     """
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
-        return np.zeros(nBits)
-    fp = AllChem.GetMorganFingerprintAsBitVect(mol, radius, nBits)
+        return np.zeros(nbits)
+    fp = AllChem.GetMorganFingerprintAsBitVect(mol, radius, nBits=nbits)
     return np.array(fp)
 
-# Generate for all compounds
-print("   Computing fingerprints... (~3-5 minutes)")
-df['ECFP'] = df['Drug'].apply(morgan_ecfp)
-X = np.stack(df['ECFP'].values)
+# Generate ECFP for train set
+print("\n   Computing ECFP for TRAIN set (~2,073 compounds)...")
+df_train['ECFP'] = df_train['SMILES'].apply(morgan_ecfp)
+X_train = np.stack(df_train['ECFP'].values)
 
-print(f"✅ ECFP Complete!")
-print(f"   X shape: {X.shape}")
-print(f"   Memory: {X.nbytes / 1e6:.1f} MB")
-print(f"   Sample fingerprint (first 10 bits): {X[0][:10]}")
+print(f"   ✅ X_train: {X_train.shape}")
+print(f"      Memory: {X_train.nbytes / 1e6:.1f} MB")
+print(f"      Sample: {X_train[0][:10]}")
 
-# ============================================================================
-# STEP 3: TRAIN/TEST SPLIT (Proposal Section 3.2)
-# ============================================================================
-print("\n✂️  STEP 3: Train/Test split (80/20, stratified)...")
+# Generate ECFP for test set
+print("\n   Computing ECFP for TEST set (~78 compounds)...")
+df_test['ECFP'] = df_test['SMILES'].apply(morgan_ecfp)
+X_test = np.stack(df_test['ECFP'].values)
 
-y = df['Y'].values
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, stratify=y, random_state=42
-)
+print(f"   ✅ X_test: {X_test.shape}")
+print(f"      Memory: {X_test.nbytes / 1e6:.1f} MB")
 
-print(f"✅ Split Complete!")
-print(f"   Train: {X_train.shape} ({y_train.mean():.1%} toxic)")
-print(f"   Test:  {X_test.shape}  ({y_test.mean():.1%} toxic)")
-print(f"   ✓ Stratified: toxic ratios match!")
+y_train = df_train['Label'].values
+y_test = df_test['Label'].values
 
 # ============================================================================
-# STEP 4: PCA DIMENSIONALITY REDUCTION (Proposal Section 4)
+# STEP 3: PCA DIMENSIONALITY REDUCTION (Proposal Section 4)
 # ============================================================================
-print("\n📉 STEP 4: PCA dimensionality reduction...")
-print("   n_components=100 (from outputs.txt)")
+print("\n📉 STEP 3: PCA dimensionality reduction...")
+print("   n_components=100")
 
 pca = PCA(n_components=100, random_state=42)
 X_train_pca = pca.fit_transform(X_train)
@@ -102,7 +98,17 @@ print(f"   Explained variance: {pca.explained_variance_ratio_.sum():.1%}")
 print(f"   Top 5 components: {pca.explained_variance_ratio_[:5].sum():.1%}")
 
 # ============================================================================
-# SAVE PREPROCESSED DATA
+# STEP 4: DATA SUMMARY
+# ============================================================================
+print("\n📊 STEP 4: Data Summary")
+print("="*70)
+print(f"{'Train Set':<20} {X_train_pca.shape[0]:>10} samples | Toxic: {y_train.mean():>6.1%}")
+print(f"{'Test Set':<20} {X_test_pca.shape[0]:>10} samples | Toxic: {y_test.mean():>6.1%}")
+print(f"{'Features (after PCA)':<20} {X_train_pca.shape[1]:>10} dimensions")
+print("="*70)
+
+# ============================================================================
+# STEP 5: SAVE PREPROCESSED DATA
 # ============================================================================
 print("\n💾 STEP 5: Saving preprocessed data...")
 
@@ -111,13 +117,29 @@ np.save('X_test_pca.npy', X_test_pca)
 np.save('y_train.npy', y_train)
 np.save('y_test.npy', y_test)
 
+# Save metadata
+metadata = {
+    'n_train_samples': len(y_train),
+    'n_test_samples': len(y_test),
+    'n_features_original': X_train.shape[1],
+    'n_features_pca': X_train_pca.shape[1],
+    'pca_variance': pca.explained_variance_ratio_.sum(),
+    'train_toxic_rate': y_train.mean(),
+    'test_toxic_rate': y_test.mean()
+}
+
+import json
+with open('data_metadata.json', 'w') as f:
+    json.dump(metadata, f, indent=2)
+
 print(f"✅ Saved:")
-print(f"   - X_train_pca.npy")
-print(f"   - X_test_pca.npy")
+print(f"   - X_train_pca.npy ({X_train_pca.nbytes / 1e6:.1f} MB)")
+print(f"   - X_test_pca.npy ({X_test_pca.nbytes / 1e6:.1f} MB)")
 print(f"   - y_train.npy")
 print(f"   - y_test.npy")
+print(f"   - data_metadata.json")
 
-print("\n" + "="*60)
+print("\n" + "="*70)
 print("✅ DATA PREPROCESSING COMPLETE!")
-print("   Ready for model training (KNN, SVM, etc.)")
-print("="*60)
+print("   Ready for model training (KNN, SVM, Ensemble, etc.)")
+print("="*70)
