@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import auc, precision_recall_curve
 
-# Tüm sonuçlar (manuel olarak neural network'den çıktı ekle)
+# All Results
 results = {
     'Model': [
         'KNN',
@@ -19,7 +19,7 @@ results = {
         'Neural Network'
     ],
     'Test AUROC': [
-        0.7243, 0.8682, 0.8348, 0.6630, 0.7403, 0.7814, 0.8513, 0.8403  # NN çıktısı buraya
+        0.7243, 0.8682, 0.8348, 0.6630, 0.7403, 0.7814, 0.8513, 0.8403 
     ],
     'Sensitivity': [
         0.2895, 0.6579, 0.7632, 0.5263, 0.6053, 0.2105, 0.3158, 0.2895
@@ -37,10 +37,10 @@ results = {
 
 df = pd.DataFrame(results)
 
-# Balanced Accuracy hesapla: (Sensitivity + Specificity) / 2
+# Calculate Balanced Accuracy: (Sensitivity + Specificity) / 2
 df['Balanced Accuracy'] = (df['Sensitivity'] + df['Specificity']) / 2
 
-# Sırala (Test AUROC'a göre)
+# Sort
 df_sorted = df.sort_values('Test AUROC', ascending=False)
 
 print("=" * 110)
@@ -72,7 +72,7 @@ for i, row in df_f1.iterrows():
     if pd.notna(row['F1-Score']):
         print(f"   {row['Model']:20s} → {row['F1-Score']:.4f}")
 
-# CSV kaydet
+# Save CSV
 import os
 
 os.makedirs('../results', exist_ok=True)
