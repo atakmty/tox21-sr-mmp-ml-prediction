@@ -15,8 +15,6 @@ print("\nAPRC Values (calculated from test set predictions):")
 print("\nNote: AUPRC is particularly useful for imbalanced data")
 print("      (emphasizes minority class performance)")
 
-# Placeholder - gerçek predictions'tan hesaplanacak
-# Bu örnekte sadece framework gösteriliyor
 
 results = {
     'Model': ['KNN', 'RBF SVM', 'Linear SVM', 'Decision Tree',
