@@ -49,7 +49,7 @@ grid_dt.fit(X_train, y_train)
 print(f"✅ Best params (DT): {grid_dt.best_params_}")
 print(f"✅ Best CV AUROC (DT): {grid_dt.best_score_:.4f}")
 
-# Test performansı
+# Test performance
 best_dt = grid_dt.best_estimator_
 y_pred_dt = best_dt.predict(X_test)
 y_proba_dt = best_dt.predict_proba(X_test)[:, 1]
@@ -77,7 +77,7 @@ roc_auc_dt = auc(fpr_dt, tpr_dt)
 print(f"\n📈 ROC AUC (DT from fpr/tpr): {roc_auc_dt:.4f}")
 print(f"   Thresholds: {len(thr_dt)}")
 
-# Feature importance (bonus: hangi özellikler önemli?)
+# Feature importance
 print(f"\n⭐ Feature Importance (Top 10):")
 feature_importance = best_dt.feature_importances_
 top_indices = np.argsort(feature_importance)[-10:][::-1]
